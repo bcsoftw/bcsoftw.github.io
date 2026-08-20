@@ -25,6 +25,28 @@
             align-items: center;
             min-height: calc(100% - 1rem);
         }
+
+        .new-notification {
+            margin-top: 1rem; 
+            font-size: 0.875rem;
+            /* line-height: 1.25rem;  */
+            text-align: center !important; 
+            color: #9CA3AF !important;
+            width: 50%;
+            margin: 0 auto; 
+        }
+
+        .bg-red { color: red !important;  }
+        .bg-green { color: green !important;  }
+        .bg-gray { color: gray !important; }
+
+        .form-dark input[type=tel], .form-dark input[type=text], .form-dark select, .form-dark textarea
+        {
+            border-color: rgba(255, 255, 255, .2);
+            background: 0 0;
+            color: #fff;
+        }
+
     </style>
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta content="" name="description" />
@@ -864,7 +886,7 @@
 
                             <div class="input__wrapper field-set">
                                 <input type="text" name="name" id="name" class="input__field form-control"
-                                    placeholder="Nombre" autocomplete="off" />
+                                    placeholder="Nombre" autocomplete="off" required/>
                                 <label for="nombre" class="input__label">
                                     Nombre
                                 </label>
@@ -873,7 +895,7 @@
 
                             <div class="input__wrapper field-set">
                                 <input type="email" name="email" id="email" class="input__field form-control"
-                                    placeholder="Email" autocomplete="off" />
+                                    placeholder="Email" autocomplete="off" required/>
                                 <label for="email" class="input__label">
                                     Email
                                 </label>
@@ -881,8 +903,8 @@
                             </div>
 
                             <div class="input__wrapper field-set">
-                                <input type="text" name="phone" id="phone" class="input__field form-control"
-                                    placeholder="Teléfono" autocomplete="off" />
+                                <input type="tel" oninput="this.value = this.value.replace(/[^0-9()+# -]/g, '')" name="phone" id="phone" class="input__field form-control"
+                                    placeholder="Teléfono" autocomplete="off" required/>
                                 <label for="Teléfono" class="input__label">
                                     Teléfono
                                 </label>
@@ -894,7 +916,7 @@
                             <div class="input__wrapper field-set">
                                 <textarea name="message" id="message" class="input__field form-control textarea"
                                     contenteditable placeholder="Mensaje" autocomplete="off"
-                                    style="height: 198px;"></textarea>
+                                    style="height: 198px;" required></textarea>
                                 <label for="Mensaje" class="input__label">
                                     Mensaje
                                 </label>
@@ -918,6 +940,7 @@
 
 
                         </div>
+                        <p id="status" class="new-notification"></p>
                     </form>
                 </div>
             </section>
@@ -960,6 +983,18 @@
             $("#dataForm").submit(function (evento) {
 
                 evento.preventDefault();
+
+                const form = this;
+                const $button = $(form).find('button[type="submit"]');
+                const $status = $("#status");
+
+                 // Bloquear botón y mostrar estado de carga
+                $button.prop("disabled", true).text("Enviando...");
+                $status
+                    .removeClass("bg-green bg-red")
+                    .addClass("bg-gray")
+                    .text("Enviando solicitud...");
+
                 let objectForm = $(this),
                     sendMethod = objectForm.attr('method'),
                     sendUrl = objectForm.attr('action'),
@@ -989,31 +1024,25 @@
                         $('#contacto').css('pointer-events', '');
                         $('#contacto').css('opacity', '1');
                         $("#contenedorr").hide();
+
+                        // Desbloquear el botón al finalizar todo el proceso
+                        $(form)
+                            .find('button[type="submit"]')
+                            .prop("disabled", false)
+                            .text("Enviar Correo");
                     },
                     success: (data) => {
                         if (data.success) {
 
-                            const Toast = Swal.mixin({
-                                toast: true,
-                                position: "top-end",
-                                showConfirmButton: false,
-                                timer: 10000,
-                                timerProgressBar: true,
-                                didOpen: (toast) => {
-                                    toast.onmouseenter = Swal.stopTimer;
-                                    toast.onmouseleave = Swal.resumeTimer;
-                                }
-                            });
-                            Toast.fire({
-                                icon: "success",
-                                title: "Correo enviado con exito!!.",
-                            });
+                            $status
+                            .removeClass("bg-gray bg-red")
+                            .addClass("bg-green")
+                            .text("Correo enviado correctamente.");
+                            form.reset();
 
-                            $("#name").val('');
-                            $("#email").val('');
-                            $("#phone").val('');
-                            $("#message").val('');
-
+                            setTimeout(function() {
+                                $status.fadeOut(); 
+                            }, 5000);
 
                         }
 
@@ -1021,26 +1050,14 @@
                     },
                     error: (err) => {
 
-                        const Toast = Swal.mixin({
-                            toast: true,
-                            position: "top-end",
-                            showConfirmButton: false,
-                            timer: 10000,
-                            timerProgressBar: true,
-                            didOpen: (toast) => {
-                                toast.onmouseenter = Swal.stopTimer;
-                                toast.onmouseleave = Swal.resumeTimer;
-                            }
-                        });
-                        Toast.fire({
-                            icon: "error",
-                            title: "Falló el envio de correo!.",
-                        });
+                        $status
+                        .removeClass("bg-gray bg-green")
+                        .addClass("bg-red")
+                        .text("No se pudo enviar el correo. Intenta nuevamente.");
 
-                        $("#name").val('');
-                        $("#email").val('');
-                        $("#phone").val('');
-                        $("#message").val('');
+                        setTimeout(function() {
+                            $status.fadeOut(); 
+                        }, 5000);
 
                     },
                 });
